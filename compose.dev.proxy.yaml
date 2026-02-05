@@ -1,19 +1,38 @@
 services:
+  cloudflare:
+    image: caomingjun/warp
+    container_name: cloudflare
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped
+    networks:
+      - cf_net
+    ports:
+      - "1080:1080"
+      - "8080:8080"
+    device_cgroup_rules:
+      - 'c 10:200 rwm'
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ./data:/var/lib/cloudflare-warp
+    environment:
+      - WARP_SLEEP=10
+
   redlib:
     build:
       context: .
       args:
         BUILDKIT_INLINE_CACHE: "1"
-        CARGO_PROFILE: "release"
-        CARGO_PROFILE_DIR: "release"
+        CARGO_PROFILE: "dev"
+        CARGO_PROFILE_DIR: "debug"
         USE_SCCACHE: "0"
         GIT_HASH: "${GIT_HASH:-dev}"
     restart: always
     container_name: "redlib"
     user: nobody
     read_only: true
-    ports:
-      - 8080:8080 
     security_opt:
       - no-new-privileges:true
       # - seccomp=seccomp-redlib.json
@@ -27,6 +46,10 @@ services:
       REDLIB_DEV_FS_CSS: "1"
       REDLIB_DEV_NOCACHE: "1"
       IPV4_ONLY: "1"
+      HTTP_PROXY: "http://cloudflare:1080"
+      HTTPS_PROXY: "http://cloudflare:1080"
+      ALL_PROXY: "http://cloudflare:1080"
+    network_mode: "service:cloudflare"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "--tries=1", "http://localhost:8080/settings"]
       interval: 30s
@@ -36,3 +59,8 @@ services:
 
 networks:
   redlib:
+  cf_net:
+    driver: bridge
+
+volumes:
+  cloudflare:

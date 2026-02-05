@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/root/.cache/sccache \
     target="${CARGO_BUILD_TARGET:-}"; \
     target="${target#\"}"; target="${target%\"}"; \
-    if [ "$USE_SCCACHE" = "1" ]; then export RUSTC_WRAPPER=sccache; export CARGO_INCREMENTAL=0; else unset RUSTC_WRAPPER; export CARGO_INCREMENTAL=1; fi; \
+    if [ "$USE_SCCACHE" = "1" ]; then export RUSTC_WRAPPER=sccache; else unset RUSTC_WRAPPER; fi; \
     if [ -z "$target" ] || [ "$target" = "''" ]; then \
         if [ "$CARGO_PROFILE" = "dev" ]; then \
             cargo build --locked; \
@@ -53,7 +53,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/root/.cache/sccache \
     target="${CARGO_BUILD_TARGET:-}"; \
     target="${target#\"}"; target="${target%\"}"; \
-    if [ "$USE_SCCACHE" = "1" ]; then export RUSTC_WRAPPER=sccache; export CARGO_INCREMENTAL=0; else unset RUSTC_WRAPPER; export CARGO_INCREMENTAL=1; fi; \
+    if [ "$USE_SCCACHE" = "1" ]; then export RUSTC_WRAPPER=sccache; else unset RUSTC_WRAPPER; fi; \
     if [ -z "$target" ] || [ "$target" = "''" ]; then \
         if [ "$CARGO_PROFILE" = "dev" ]; then \
             cargo build --locked; \

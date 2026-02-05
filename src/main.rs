@@ -4,6 +4,8 @@
 
 use cached::proc_macro::cached;
 use clap::{Arg, ArgAction, Command};
+use std::fs;
+use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::LazyLock;
 
@@ -92,17 +94,52 @@ async fn resource(body: &str, content_type: &str, cache: bool) -> Result<Respons
 }
 
 async fn style() -> Result<Response<Body>, String> {
-	let mut res = include_str!("../static/style.css").to_string();
-	for file in ThemeAssets::iter() {
-		res.push('\n');
-		let theme = ThemeAssets::get(file.as_ref()).unwrap();
-		res.push_str(std::str::from_utf8(theme.data.as_ref()).unwrap());
+	let use_fs_css = std::env::var("REDLIB_DEV_FS_CSS").is_ok();
+	if use_fs_css {
+		info!("[DEV] CSS source: filesystem (/app/static)");
+	} else {
+		info!("[DEV] CSS source: embedded assets");
 	}
+	let mut res = if use_fs_css {
+		let mut css = fs::read_to_string("/app/static/style.css").unwrap_or_else(|_| include_str!("../static/style.css").to_string());
+		if let Ok(entries) = fs::read_dir("/app/static/themes") {
+			let mut paths: Vec<PathBuf> = entries.filter_map(|e| e.ok().map(|e| e.path())).collect();
+			paths.sort();
+			for path in paths {
+				if path.extension().and_then(|ext| ext.to_str()) == Some("css") {
+					if let Ok(theme) = fs::read_to_string(&path) {
+						css.push('\n');
+						css.push_str(&theme);
+					}
+				}
+			}
+		} else {
+			for file in ThemeAssets::iter() {
+				css.push('\n');
+				let theme = ThemeAssets::get(file.as_ref()).unwrap();
+				css.push_str(std::str::from_utf8(theme.data.as_ref()).unwrap());
+			}
+		}
+		css
+	} else {
+		let mut css = include_str!("../static/style.css").to_string();
+		for file in ThemeAssets::iter() {
+			css.push('\n');
+			let theme = ThemeAssets::get(file.as_ref()).unwrap();
+			css.push_str(std::str::from_utf8(theme.data.as_ref()).unwrap());
+		}
+		css
+	};
+	let cache_control = if std::env::var("REDLIB_DEV_NOCACHE").is_ok() {
+		"no-store, no-cache, must-revalidate"
+	} else {
+		"public, max-age=1800, s-maxage=1800"
+	};
 	Ok(
 		Response::builder()
 			.status(200)
 			.header("content-type", "text/css")
-			.header("Cache-Control", "public, max-age=1209600, s-maxage=86400")
+			.header("Cache-Control", cache_control)
 			.body(res.to_string().into())
 			.unwrap_or_default(),
 	)
