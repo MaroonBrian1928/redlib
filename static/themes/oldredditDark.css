@@ -116,11 +116,22 @@ body.oldredditDark #sidebar {
 }
 
 body.oldredditDark main {
-	max-width: 980px;
+	max-width: 90vw;
+	justify-content: flex-start;
+	margin-left: 0;
 }
 
 body.oldredditDark #column_one {
-	max-width: 740px;
+	max-width: 68vw;
+	margin-left: 0;
+	width: 100%;
+}
+
+body.oldredditDark aside,
+body.oldredditDark #subreddit,
+body.oldredditDark #sidebar {
+	max-width: 300px;
+	margin-left: 12px;
 }
 
 body.oldredditDark .post {

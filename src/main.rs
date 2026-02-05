@@ -100,7 +100,7 @@ async fn style() -> Result<Response<Body>, String> {
 	} else {
 		info!("[DEV] CSS source: embedded assets");
 	}
-	let mut res = if use_fs_css {
+	let res = if use_fs_css {
 		let mut css = fs::read_to_string("/app/static/style.css").unwrap_or_else(|_| include_str!("../static/style.css").to_string());
 		if let Ok(entries) = fs::read_dir("/app/static/themes") {
 			let mut paths: Vec<PathBuf> = entries.filter_map(|e| e.ok().map(|e| e.path())).collect();

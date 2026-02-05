@@ -3,10 +3,10 @@ services:
     build:
       context: .
       args:
-        BUILDKIT_INLINE_CACHE: "1"
+        BUILDKIT_INLINE_CACHE: "0"
         CARGO_PROFILE: "release"
         CARGO_PROFILE_DIR: "release"
-        USE_SCCACHE: "0"
+        USE_SCCACHE: "1"
         GIT_HASH: "${GIT_HASH:-dev}"
     restart: always
     container_name: "redlib"
