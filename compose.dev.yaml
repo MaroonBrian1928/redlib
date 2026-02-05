@@ -15,6 +15,7 @@ services:
       # - seccomp=seccomp-redlib.json
     cap_drop:
       - ALL
+    env_file: .env
     networks:
       - redlib
     healthcheck:
