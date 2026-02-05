@@ -1,9 +1,12 @@
-# docker-compose -f docker-compose.dev.yml up -d
-version: "3.8"
-
 services:
   redlib:
-    build: .
+    build:
+      context: .
+      args:
+        BUILDKIT_INLINE_CACHE: "1"
+        CARGO_PROFILE: "dev"
+        CARGO_PROFILE_DIR: "debug"
+        USE_SCCACHE: "0"
     restart: always
     container_name: "redlib"
     ports:

@@ -54,6 +54,11 @@
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
     --popup: #b80a27;
     --spoiler: #ddd;
+    --comment-thread-1: #3d4a5a;
+    --comment-thread-2: #3a5a4a;
+    --comment-thread-3: #5a4a3a;
+    --comment-thread-4: #4a3a5a;
+    --comment-thread-5: #5a3a3a;
 
     /* Hint color theme to browser for scrollbar */
     color-scheme: dark;
@@ -74,6 +79,11 @@
         --visited: #555;
         --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         --spoiler: #0f0f0f;
+        --comment-thread-1: #c7d2e1;
+        --comment-thread-2: #cfe1d2;
+        --comment-thread-3: #e1d6c7;
+        --comment-thread-4: #d7c7e1;
+        --comment-thread-5: #e1c7c7;
 
         /* Hint color theme to browser for scrollbar */
         color-scheme: light;
@@ -1679,12 +1689,32 @@ a.search_subreddit:hover {
 .line {
     width: 2px;
     height: 100%;
-    background: var(--foreground);
+    background: var(--comment-thread-1);
 }
 
 summary.comment_data {
     cursor: pointer;
 }
+
+/* .replies {
+    border-left: 2px solid var(--comment-thread-1);
+}
+
+.replies .replies {
+    border-left-color: var(--comment-thread-2);
+}
+
+.replies .replies .replies {
+    border-left-color: var(--comment-thread-3);
+}
+
+.replies .replies .replies .replies {
+    border-left-color: var(--comment-thread-4);
+}
+
+.replies .replies .replies .replies .replies {
+    border-left-color: var(--comment-thread-5);
+} */
 
 .user_comment_data_divider {
     display: flex;

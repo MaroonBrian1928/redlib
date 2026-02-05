@@ -6,19 +6,48 @@ ARG ALPINE_VERSION=3.20
 ########################
 FROM rust:alpine${ALPINE_VERSION} AS builder
 
-RUN apk add --no-cache musl-dev
+RUN apk add --no-cache musl-dev sccache mold
+
+ENV SCCACHE_DIR=/root/.cache/sccache
+ENV RUSTFLAGS="-C link-arg=-fuse-ld=mold"
+ENV CARGO_INCREMENTAL=0
+ENV CARGO_PROFILE_RELEASE_DEBUG=1
+
+ARG CARGO_PROFILE=release
+ARG CARGO_PROFILE_DIR=release
+ARG USE_SCCACHE=1
 
 WORKDIR /redlib
 
 # download (most) dependencies in their own layer
 COPY Cargo.lock Cargo.toml ./
 RUN mkdir src && echo "fn main() { panic!(\"why am i running?\") }" > src/main.rs
-RUN cargo build --release --locked --bin redlib
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/redlib/target \
+    --mount=type=cache,target=/root/.cache/sccache \
+    if [ "$USE_SCCACHE" = "1" ]; then export RUSTC_WRAPPER=sccache; export CARGO_INCREMENTAL=0; else unset RUSTC_WRAPPER; export CARGO_INCREMENTAL=1; fi; \
+    if [ "$CARGO_PROFILE" = "dev" ]; then \
+        cargo build --locked --bin redlib; \
+    else \
+        cargo build --release --locked --bin redlib; \
+    fi
+RUN if [ "$USE_SCCACHE" = "1" ]; then which sccache && sccache --show-stats || true; else true; fi
 RUN rm ./src/main.rs && rmdir ./src
 
 # copy the source and build the redlib binary
 COPY . ./
-RUN cargo build --release --locked --bin redlib
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
+    --mount=type=cache,target=/redlib/target \
+    --mount=type=cache,target=/root/.cache/sccache \
+    if [ "$USE_SCCACHE" = "1" ]; then export RUSTC_WRAPPER=sccache; export CARGO_INCREMENTAL=0; else unset RUSTC_WRAPPER; export CARGO_INCREMENTAL=1; fi; \
+    if [ "$CARGO_PROFILE" = "dev" ]; then \
+        cargo build --locked --bin redlib; \
+    else \
+        cargo build --release --locked --bin redlib; \
+    fi
+RUN if [ "$USE_SCCACHE" = "1" ]; then which sccache && sccache --show-stats || true; else true; fi
 RUN echo "finished building redlib!"
 
 ########################
@@ -26,8 +55,13 @@ RUN echo "finished building redlib!"
 ########################
 FROM alpine:${ALPINE_VERSION} AS release
 
+ARG CARGO_PROFILE_DIR=release
+
 # Import redlib binary from builder
-COPY --from=builder /redlib/target/release/redlib /usr/local/bin/redlib
+COPY --from=builder /redlib/target/${CARGO_PROFILE_DIR}/redlib /usr/local/bin/redlib
+WORKDIR /app
+COPY --from=builder /redlib/static /app/static
+COPY --from=builder /redlib/templates /app/templates
 
 # Add non-root user for running redlib
 RUN adduser --home /nonexistent --no-create-home --disabled-password redlib

@@ -8,6 +8,7 @@ use std::os::windows::process::ExitStatusExt;
 
 fn main() {
 	println!("cargo:rerun-if-changed=src/");
+	println!("cargo:rerun-if-changed=static/themes/");
 	let git_hash = if let Ok(value) = std::env::var("GIT_HASH") {
 		if value.trim().is_empty() {
 			None
